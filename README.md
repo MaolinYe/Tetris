@@ -36,3 +36,5 @@ OpenGL实现的俄罗斯方块
     glEnableVertexAttribArray(1);
 ```
 ![img.png](images/Grid.png)
+## 方块
+先绘制出所有的方块，一开始全部绘制成黑色的，然后绘制俄罗斯的四个方块
