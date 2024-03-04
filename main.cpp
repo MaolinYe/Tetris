@@ -8,8 +8,8 @@
 #include <glm/gtc/type_ptr.hpp>
 
 GLFWwindow *mainWindow;
-const int screenWidth = 900; // cube x 12
-const int screenHeight = 1650; // cube x 22
+const int screenWidth = 600; // cube x 12
+const int screenHeight = 1100; // cube x 22
 
 
 void framebuffer_size_callback(GLFWwindow *window, int width, int height) {
@@ -36,14 +36,22 @@ void init() {
     }
 }
 
-const int cube_size = 75; // 方块大小
+const int cube_size = 50; // 方块大小
 const int cube_num_w = 10; // 宽度方块数量
 const int cube_num_h = 20; // 高度方块数量
 const int line_points_num = 2 * (cube_num_h + cube_num_w + 2); // 网格线点数量
-unsigned int line_points_VAO;
-unsigned int line_points_VBO;
-unsigned int line_points_colors_VBO;
-
+unsigned int line_points_VAO; // 线VAO
+unsigned int line_points_VBO; // 线点位置VBO
+unsigned int line_points_colors_VBO; // 线点颜色VBO
+const int cube_points_num=cube_num_h*cube_num_w*6; // 方块三角形顶点数量
+bool cube_filled[cube_num_w][cube_num_h]; // 存在方块与否
+glm::vec2 cube_position={5,19}; // 四个方块中心
+glm::vec2 cube4[4]; // 四个方块
+glm::vec2 cubeL[4][4] = // 四种旋转L方块
+        {{glm::vec2(0, 0), glm::vec2(-1,0), glm::vec2(1, 0), glm::vec2(-1,-1)},
+         {glm::vec2(0, 1), glm::vec2(0, 0), glm::vec2(0,-1), glm::vec2(1, -1)},
+         {glm::vec2(1, 1), glm::vec2(-1,0), glm::vec2(0, 0), glm::vec2(1,  0)},
+         {glm::vec2(-1,1), glm::vec2(0, 1), glm::vec2(0, 0), glm::vec2(0, -1)}};
 void initGame() {
     glm::vec4 line_points[line_points_num]; // 线点集
     for (int i = 0; i <= cube_num_w; i++) { // 竖线
@@ -77,8 +85,8 @@ void initGame() {
 int main() {
     init();
     initGame();
-    Shader shader(R"(C:\Users\Yezi\Desktop\Tetris\shaders\shader.vs)",
-                  R"(C:\Users\Yezi\Desktop\Tetris\shaders\shader.fs)");
+    Shader shader(R"(C:\Users\Tencent go\Desktop\Tetris\shaders\shader.vs)",
+                  R"(C:\Users\Tencent go\Desktop\Tetris\shaders\shader.fs)");
     shader.use();
     shader.setInt("xsize", screenWidth);
     shader.setInt("ysize", screenHeight);
