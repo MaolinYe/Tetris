@@ -6,16 +6,19 @@
 #include "glm/detail/func_trigonometric.hpp"
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include <random>
 
 GLFWwindow *mainWindow;
 const int screenWidth = 600; // cube x 12
 const int screenHeight = 1100; // cube x 22
-
+const int cube_size = 50; // 方块大小
+const int cube_num_w = 10; // 宽度方块数量
+const int cube_num_h = 20; // 高度方块数量
 
 void framebuffer_size_callback(GLFWwindow *window, int width, int height) {
     glViewport(0, 0, width, height); // 设置 OpenGL 渲染窗口的大小，前两个参数设置窗口左下角的位置，第三个和第四个参数以像素为单位设置渲染窗口的宽度和高度
 }
-
+// OpenGL初始化
 void init() {
     // 初始化GLFW窗口和GLAD
     {
@@ -39,9 +42,7 @@ void init() {
     glfwSetFramebufferSizeCallback(mainWindow, framebuffer_size_callback); // 注册窗口调整调用函数
 }
 
-const int cube_size = 50; // 方块大小
-const int cube_num_w = 10; // 宽度方块数量
-const int cube_num_h = 20; // 高度方块数量
+
 const int line_points_num = 2 * (cube_num_h + cube_num_w + 2); // 网格线点数量
 unsigned int line_points_VAO; // 线VAO
 unsigned int line_points_VBO; // 线点位置VBO
@@ -52,17 +53,18 @@ unsigned int cube_all_colors_VBO; // 所有方块点颜色VBO
 const int cube_points_num = cube_num_h * cube_num_w * 6; // 方块三角形顶点数量
 glm::vec4 cube_all_colors[cube_points_num]; // 所有方块点颜色
 bool cube_filled[cube_num_w][cube_num_h]; // 存在方块与否
-unsigned int cube_tetris_VAO; // 俄罗斯四个方块VAO
-unsigned int cube_tetris_VBO; // 俄罗斯四个方块位置VBO
-unsigned int cube_tetris_colors_VBO; // 俄罗斯方块点颜色
-glm::vec2 cube_position = {5, 19}; // 四个方块中心
-glm::vec2 cube4[4]; // 四个方块
-glm::vec2 cubeL[4][4] = // 四种旋转L方块相对于中心的位置偏移
+unsigned int Tetris_VAO; // 俄罗斯四个方块VAO
+unsigned int Tetris_VBO; // 俄罗斯四个方块位置VBO
+unsigned int Tetris_colors_VBO; // 俄罗斯方块点颜色
+glm::vec2 TetrisPosition = {5, 18}; // 四个方块中心
+glm::vec2 TetrisCubes[4]; // 俄罗斯四个方块
+glm::vec2 Tetris_L[4][4] = // L方块四种旋转相对于中心的位置偏移
         {{glm::vec2(0, 0),  glm::vec2(-1, 0), glm::vec2(1, 0),  glm::vec2(-1, -1)},
          {glm::vec2(0, 1),  glm::vec2(0, 0),  glm::vec2(0, -1), glm::vec2(1, -1)},
          {glm::vec2(1, 1),  glm::vec2(-1, 0), glm::vec2(0, 0),  glm::vec2(1, 0)},
          {glm::vec2(-1, 1), glm::vec2(0, 1),  glm::vec2(0, 0),  glm::vec2(0, -1)}};
 
+// 游戏初始化
 void initGame() {
     // 画网格线
     {
@@ -77,12 +79,12 @@ void initGame() {
             line_points[points_h_num + 2 * i + 1] =
                     line_points[points_h_num + 2 * i] + glm::vec4{cube_num_w * cube_size, 0, 0, 0}; // 线右端点
         }
-        glGenVertexArrays(1, &line_points_VAO);
+        glGenVertexArrays(1, &line_points_VAO); // 网格线
         glBindVertexArray(line_points_VAO);
         glGenBuffers(1, &line_points_VBO);
         glBindBuffer(GL_ARRAY_BUFFER, line_points_VBO);
         glBufferData(GL_ARRAY_BUFFER, line_points_num * sizeof(glm::vec4), line_points, GL_STATIC_DRAW);
-        glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 0, 0);
+        glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 0, nullptr);
         glEnableVertexAttribArray(0);
         glm::vec4 line_points_colors[line_points_num]; // 线点颜色集
         for (auto &line_points_color: line_points_colors) {
@@ -91,52 +93,97 @@ void initGame() {
         glGenBuffers(1, &line_points_colors_VBO);
         glBindBuffer(GL_ARRAY_BUFFER, line_points_colors_VBO);
         glBufferData(GL_ARRAY_BUFFER, line_points_num * sizeof(glm::vec4), line_points_colors, GL_STATIC_DRAW);
-        glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 0, 0);
+        glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 0, nullptr);
         glEnableVertexAttribArray(1);
     }
     // 画所有的方块
     {
         glm::vec4 cube_all_points[cube_points_num]; // 全部方块点位置
-        for(int i=0;i<cube_num_h;i++){
-            for(int j=0;j<cube_num_w;j++){
-                glm::vec4 p1={cube_size*(j+1),cube_size*(i+1),0,1};
-                glm::vec4 p2=p1+glm::vec4 {0,cube_size,0,0};
-                glm::vec4 p3=p1+glm::vec4 {cube_size,0,0,0};
-                glm::vec4 p4=p1+glm::vec4 {cube_size,cube_size,0,0};
-                int number=6*(cube_num_w*i+j); // 一个方块两个三角形六个顶点
-                cube_all_points[number]=p1;
-                cube_all_points[number+1]=p2;
-                cube_all_points[number+2]=p3;
-                cube_all_points[number+3]=p2;
-                cube_all_points[number+4]=p3;
-                cube_all_points[number+5]=p4;
+        for (int i = 0; i < cube_num_h; i++) {
+            for (int j = 0; j < cube_num_w; j++) {
+                glm::vec4 p1 = {cube_size * (j + 1), cube_size * (i + 1), 0, 1};
+                glm::vec4 p2 = p1 + glm::vec4{0, cube_size, 0, 0};
+                glm::vec4 p3 = p1 + glm::vec4{cube_size, 0, 0, 0};
+                glm::vec4 p4 = p1 + glm::vec4{cube_size, cube_size, 0, 0};
+                int number = 6 * (cube_num_w * i + j); // 一个方块两个三角形六个顶点
+                cube_all_points[number] = p1;
+                cube_all_points[number + 1] = p2;
+                cube_all_points[number + 2] = p3;
+                cube_all_points[number + 3] = p2;
+                cube_all_points[number + 4] = p3;
+                cube_all_points[number + 5] = p4;
             }
         }
-        glGenVertexArrays(1, &cube_all_VAO);
+        glGenVertexArrays(1, &cube_all_VAO); // 全部方块
         glBindVertexArray(cube_all_VAO);
-        glGenBuffers(1, &cube_all_VBO);
+        glGenBuffers(1, &cube_all_VBO); // 方块位置
         glBindBuffer(GL_ARRAY_BUFFER, cube_all_VBO);
         glBufferData(GL_ARRAY_BUFFER, cube_points_num * sizeof(glm::vec4), cube_all_points, GL_STATIC_DRAW);
-        glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 0, 0);
+        glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 0, nullptr);
         glEnableVertexAttribArray(0);
-        for(auto&cube_all_color:cube_all_colors){
-            cube_all_color={0,1,1,1}; // 全部方块点的颜色
+        for (auto &cube_all_color: cube_all_colors) {
+            cube_all_color = {0, 1, 1, 1}; // 全部方块点的颜色
         }
         glGenBuffers(1, &cube_all_colors_VBO);
         glBindBuffer(GL_ARRAY_BUFFER, cube_all_colors_VBO);
         glBufferData(GL_ARRAY_BUFFER, cube_points_num * sizeof(glm::vec4), cube_all_colors, GL_STATIC_DRAW);
-        glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 0, 0);
+        glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 0, nullptr);
         glEnableVertexAttribArray(1);
     }
     // 画俄罗斯的四个方块
     {
-
+        glGenVertexArrays(1, &Tetris_VAO); // 俄罗斯方块
+        glBindVertexArray(Tetris_VAO);
+        glGenBuffers(1, &Tetris_VBO); // 方块位置
+        glBindBuffer(GL_ARRAY_BUFFER,Tetris_VBO);
+        glBufferData(GL_ARRAY_BUFFER, 24 * sizeof(glm::vec4), nullptr, GL_STATIC_DRAW);
+        glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 0, nullptr);
+        glEnableVertexAttribArray(0);
+        glGenBuffers(1,&Tetris_colors_VBO);
+        glBindBuffer(GL_ARRAY_BUFFER, Tetris_colors_VBO); // 方块点颜色
+        glBufferData(GL_ARRAY_BUFFER, 24 * sizeof(glm::vec4), nullptr, GL_DYNAMIC_DRAW);
+        glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 0, nullptr);
+        glEnableVertexAttribArray(1);
     }
 }
 
+// 更新俄罗斯方块的位置
+void updateTetrisPosition() {
+    glBindBuffer(GL_ARRAY_BUFFER, Tetris_VBO);
+    for (int i=0;i<4;i++) { // 计算四个方块的位置
+        // 由相对位置计算出方块的位置
+        float x = TetrisPosition.x + TetrisCubes[i].x;
+        float y = TetrisPosition.y + TetrisCubes[i].y;
+        // 计算方块四个点位置
+        glm::vec4 p1 = {cube_size * (x + 1), cube_size * (y + 1), 0, 1};
+        glm::vec4 p2 = p1 + glm::vec4{0, cube_size, 0, 0};
+        glm::vec4 p3 = p1 + glm::vec4{cube_size, 0, 0, 0};
+        glm::vec4 p4 = p1 + glm::vec4{cube_size, cube_size, 0, 0};
+        glm::vec4 tetris_points[6]={p1,p2,p3,p2,p3,p4};
+        glBufferSubData(GL_ARRAY_BUFFER, i*6*sizeof(glm::vec4), 6*sizeof(glm::vec4), tetris_points);
+    }
+}
+// 生成新的俄罗斯方块
+void newTetris(){
+    TetrisPosition={5, 18}; // 初始位置中心
+    std::random_device rd;  // 使用随机设备作为种子
+    std::mt19937 gen(rd()); // 使用 Mersenne Twister 作为随机数引擎
+    std::uniform_int_distribution<int> dis(0, 3); // 生成 [0,3] 范围内的随机整数
+    int rotation=dis(gen); // 随机旋转方向
+    for(int i=0;i<4;i++){ // 生成一种俄罗斯方块
+        TetrisCubes[i]=Tetris_L[rotation][i];
+    }
+    glm::vec4 TetrisColors[24];
+    for (auto & TetrisColor : TetrisColors)
+        TetrisColor = {1,0,0,1};
+    glBindBuffer(GL_ARRAY_BUFFER, Tetris_colors_VBO);
+    glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(TetrisColors), TetrisColors);
+    updateTetrisPosition();
+}
 int main() {
     init();
     initGame();
+    newTetris();
     Shader shader(R"(C:\Users\Tencent go\Desktop\Tetris\shaders\shader.vs)",
                   R"(C:\Users\Tencent go\Desktop\Tetris\shaders\shader.fs)");
     shader.use();
@@ -145,6 +192,8 @@ int main() {
     while (!glfwWindowShouldClose(mainWindow)) {
         glBindVertexArray(cube_all_VAO); // 画全部方块
         glDrawArrays(GL_TRIANGLES, 0, cube_points_num);
+        glBindVertexArray(Tetris_VAO); // 画俄罗斯方块
+        glDrawArrays(GL_TRIANGLES,0,24);
         glBindVertexArray(line_points_VAO); // 画网格线
         glDrawArrays(GL_LINES, 0, line_points_num);
         glfwSwapBuffers(mainWindow); // 交换在此渲染迭代期间用于渲染的颜色缓冲区
