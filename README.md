@@ -149,7 +149,7 @@ bool isPositionValid(glm::vec2 cubePosition) {
 void rotateTetris() {
     int nextRotation = (rotation + 1) % 4;
     for (int i = 0; i < 4; i++) {
-        if (!isPositionValid(TetrisPosition + Tetris_L[rotation][i]))
+        if (!isPositionValid(TetrisPosition + Tetris_L[nextRotation][i]))
             return;
     }
     rotation = nextRotation;
@@ -174,3 +174,38 @@ void key_callback(GLFWwindow *window, int key, int scancode, int action, int mod
     }
 }
 ```
+## 移动俄罗斯方块
+移动俄罗斯方块中心位置，判断移动后位置是否合法
+```c++
+// 移动俄罗斯方块
+void moveTetris(glm::vec2 move) {
+    glm::vec2 newPosition[4];
+    for (int i = 0; i < 4; i++) {
+        newPosition[i] = TetrisPosition + move + TetrisCubes[i];
+        if (!isPositionValid(newPosition[i]))
+            return;
+    }
+    TetrisPosition += move;
+    updateTetrisPosition();
+}
+```
+更新键盘输入处理
+```c++
+// 处理键盘输入事件
+void key_callback(GLFWwindow *window, int key, int scancode, int action, int mode) {
+    if (action == GLFW_PRESS || action == GLFW_REPEAT) {
+        if (key == GLFW_KEY_ESCAPE)
+            glfwSetWindowShouldClose(window, true);
+        else if (key == GLFW_KEY_W) {
+            rotateTetris();
+        } else if (key == GLFW_KEY_S) {
+            moveTetris({0,-1});
+        } else if (key == GLFW_KEY_A) {
+            moveTetris({-1,0});
+        } else if (key == GLFW_KEY_D) {
+            moveTetris({1,0});
+        }
+    }
+}
+```
+![img.gif](images/移动旋转俄罗斯方块.gif)

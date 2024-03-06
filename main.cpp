@@ -83,13 +83,25 @@ bool isPositionValid(glm::vec2 cubePosition) {
 void rotateTetris() {
     int nextRotation = (rotation + 1) % 4;
     for (int i = 0; i < 4; i++) {
-        if (!isPositionValid(TetrisPosition + Tetris_L[rotation][i]))
+        if (!isPositionValid(TetrisPosition + Tetris_L[nextRotation][i]))
             return;
     }
     rotation = nextRotation;
     for (int i = 0; i < 4; i++) { // 生成一种俄罗斯方块
         TetrisCubes[i] = Tetris_L[rotation][i];
     }
+    updateTetrisPosition();
+}
+
+// 移动俄罗斯方块
+void moveTetris(glm::vec2 move) {
+    glm::vec2 newPosition[4];
+    for (int i = 0; i < 4; i++) {
+        newPosition[i] = TetrisPosition + move + TetrisCubes[i];
+        if (!isPositionValid(newPosition[i]))
+            return;
+    }
+    TetrisPosition += move;
     updateTetrisPosition();
 }
 
@@ -100,14 +112,20 @@ void key_callback(GLFWwindow *window, int key, int scancode, int action, int mod
             glfwSetWindowShouldClose(window, true);
         else if (key == GLFW_KEY_W) {
             rotateTetris();
-        } else if (key == GLFW_KEY_S) {}
-        else if (key == GLFW_KEY_A) {}
-        else if (key == GLFW_KEY_D) {}
+        } else if (key == GLFW_KEY_S) {
+            moveTetris({0,-1});
+        } else if (key == GLFW_KEY_A) {
+            moveTetris({-1,0});
+        } else if (key == GLFW_KEY_D) {
+            moveTetris({1,0});
+        }
     }
 }
+
 void framebuffer_size_callback(GLFWwindow *window, int width, int height) {
     glViewport(0, 0, width, height); // 设置 OpenGL 渲染窗口的大小，前两个参数设置窗口左下角的位置，第三个和第四个参数以像素为单位设置渲染窗口的宽度和高度
 }
+
 // OpenGL初始化
 void init() {
     // 初始化GLFW窗口和GLAD
@@ -132,6 +150,7 @@ void init() {
     glfwSetFramebufferSizeCallback(mainWindow, framebuffer_size_callback); // 注册窗口调整调用函数
     glfwSetKeyCallback(mainWindow, key_callback); // 注册键盘输入事件
 }
+
 // 游戏初始化
 void initGame() {
     // 画网格线
@@ -214,6 +233,7 @@ void initGame() {
         glEnableVertexAttribArray(1);
     }
 }
+
 int main() {
     init();
     initGame();
