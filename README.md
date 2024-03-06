@@ -134,3 +134,29 @@ void newTetris(){
 }
 ```
 ![img.png](images/L_Tetirs.png)
+## 旋转俄罗斯方块
+检测方块位置合法性
+```c++
+bool isPositionValid(glm::vec2 cubePosition) {
+    if (cubePosition.x >= 0 && cubePosition.x < cube_num_w && cubePosition.y >= 0 && cubePosition.y < cube_num_h)
+        return true;
+    return false;
+}
+```
+俄罗斯方块不同的旋转方式已经使用数组的方式存储下来，改变旋转方式只需要改变俄罗斯方块的位置索引
+```c++
+// 旋转俄罗斯方块
+void rotateTetris() {
+    int nextRotation = (rotation + 1) % 4;
+    for (int i = 0; i < 4; i++) {
+        if (!isPositionValid(TetrisPosition + Tetris_L[rotation][i]))
+            return;
+    }
+    rotation = nextRotation;
+    for (int i = 0; i < 4; i++) { // 生成一种俄罗斯方块
+        TetrisCubes[i] = Tetris_L[rotation][i];
+    }
+    updateTetrisPosition();
+}
+```
+处理键盘输入，向上（up或者w）旋转方块，使用glfwGetKey会在短时间内多次读取键盘输入状态，使用glfwSetKeyCallback结合press和repeat则不会
