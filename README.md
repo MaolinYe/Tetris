@@ -160,3 +160,17 @@ void rotateTetris() {
 }
 ```
 处理键盘输入，向上（up或者w）旋转方块，使用glfwGetKey会在短时间内多次读取键盘输入状态，使用glfwSetKeyCallback结合press和repeat则不会
+```c++
+// 处理键盘输入事件
+void key_callback(GLFWwindow *window, int key, int scancode, int action, int mode) {
+    if (action == GLFW_PRESS || action == GLFW_REPEAT) {
+        if (key == GLFW_KEY_ESCAPE)
+            glfwSetWindowShouldClose(window, true);
+        else if (key == GLFW_KEY_W) {
+            rotateTetris();
+        } else if (key == GLFW_KEY_S) {}
+        else if (key == GLFW_KEY_A) {}
+        else if (key == GLFW_KEY_D) {}
+    }
+}
+```

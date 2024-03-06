@@ -29,7 +29,7 @@ unsigned int Tetris_VAO; // 俄罗斯四个方块VAO
 unsigned int Tetris_VBO; // 俄罗斯四个方块位置VBO
 unsigned int Tetris_colors_VBO; // 俄罗斯方块点颜色
 glm::vec2 TetrisPosition = {5, 18}; // 四个方块中心
-glm::vec2 TetrisCubes[4]; // 俄罗斯四个方块
+glm::vec2 TetrisCubes[4]; // 俄罗斯四个方块相互的位置
 int rotation = 0;
 glm::vec2 Tetris_L[4][4] = // L方块四种旋转相对于中心的位置偏移
         {{glm::vec2(0, 0),  glm::vec2(-1, 0), glm::vec2(1, 0),  glm::vec2(-1, -1)},
@@ -224,7 +224,6 @@ int main() {
     shader.setInt("xsize", screenWidth);
     shader.setInt("ysize", screenHeight);
     while (!glfwWindowShouldClose(mainWindow)) {
-//        processInput(mainWindow);
         glBindVertexArray(cube_all_VAO); // 画全部方块
         glDrawArrays(GL_TRIANGLES, 0, cube_points_num);
         glBindVertexArray(Tetris_VAO); // 画俄罗斯方块
