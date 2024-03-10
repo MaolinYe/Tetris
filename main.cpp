@@ -31,12 +31,52 @@ unsigned int Tetris_colors_VBO; // 俄罗斯方块点颜色
 glm::vec2 TetrisPosition = {5, 18}; // 四个方块中心
 glm::vec2 TetrisCubes[4]; // 俄罗斯四个方块相互的位置
 int rotation = 0;
-glm::vec2 Tetris_L[4][4] = // L方块四种旋转相对于中心的位置偏移
-        {{glm::vec2(0, 0),  glm::vec2(-1, 0), glm::vec2(1, 0),  glm::vec2(-1, -1)},
-         {glm::vec2(0, 1),  glm::vec2(0, 0),  glm::vec2(0, -1), glm::vec2(1, -1)},
-         {glm::vec2(1, 1),  glm::vec2(-1, 0), glm::vec2(0, 0),  glm::vec2(1, 0)},
-         {glm::vec2(-1, 1), glm::vec2(0, 1),  glm::vec2(0, 0),  glm::vec2(0, -1)}};
+int Type; // 七种俄罗斯方块中的一种
+// 七种俄罗斯方块，四种旋转方式，相对于中心的位置偏移
+glm::vec2 TetrisTypes[7][4][4] = {
+        {{glm::vec2(0, 0),  glm::vec2(-1, 0), glm::vec2(1, 0),  glm::vec2(-1, -1)},    //   L
+                {glm::vec2(0, 1),  glm::vec2(0, 0),  glm::vec2(0, -1), glm::vec2(1, -1)},   //
+                {glm::vec2(1, 1),  glm::vec2(-1, 0), glm::vec2(0, 0),  glm::vec2(1, 0)},   //
+                {glm::vec2(-1, 1),  glm::vec2(0, 1),  glm::vec2(0, 0),  glm::vec2(0, -1)}},
+
+        {{glm::vec2(0, 0),  glm::vec2(-1, 0), glm::vec2(0, -1), glm::vec2(-1, -1)},   // O
+                {glm::vec2(0, 0),  glm::vec2(-1, 0), glm::vec2(0, -1), glm::vec2(-1, -1)},
+                {glm::vec2(0, 0),  glm::vec2(-1, 0), glm::vec2(0, -1), glm::vec2(-1, -1)},
+                {glm::vec2(0, 0),   glm::vec2(-1, 0), glm::vec2(0, -1), glm::vec2(-1, -1)}},
+
+        {{glm::vec2(-2, 0), glm::vec2(-1, 0), glm::vec2(0, 0),  glm::vec2(1, 0)},    // I
+                {glm::vec2(0, 1),  glm::vec2(0, 0),  glm::vec2(0, -1), glm::vec2(0, -2)},   //
+                {glm::vec2(-2, 0), glm::vec2(-1, 0), glm::vec2(0, 0),  glm::vec2(1, 0)},   //
+                {glm::vec2(0, 1),   glm::vec2(0, 0),  glm::vec2(0, -1), glm::vec2(0, -2)}},
+
+        {{glm::vec2(0, 0),  glm::vec2(1, 0),  glm::vec2(0, -1), glm::vec2(-1, -1)},    // S
+                {glm::vec2(0, 1),  glm::vec2(0, 0),  glm::vec2(1, 0),  glm::vec2(1, -1)},   //
+                {glm::vec2(0, 0),  glm::vec2(1, 0),  glm::vec2(0, -1), glm::vec2(-1, -1)},   //
+                {glm::vec2(0, 1),   glm::vec2(0, 0),  glm::vec2(1, 0),  glm::vec2(1, -1)}},
+
+        {{glm::vec2(0, 0),  glm::vec2(-1, 0), glm::vec2(0, -1), glm::vec2(1, -1)},    // Z
+                {glm::vec2(0, -1), glm::vec2(0, 0),  glm::vec2(1, 0),  glm::vec2(1, 1)},   //
+                {glm::vec2(0, 0),  glm::vec2(-1, 0), glm::vec2(0, -1), glm::vec2(1, -1)},   //
+                {glm::vec2(0, -1),  glm::vec2(0, 0),  glm::vec2(1, 0),  glm::vec2(1, 1)}},
+
+        {{glm::vec2(0, 0),  glm::vec2(-1, 0), glm::vec2(1, 0),  glm::vec2(1, -1)},    // J
+                {glm::vec2(0, 1),  glm::vec2(0, 0),  glm::vec2(0, -1), glm::vec2(1, 1)},   //
+                {glm::vec2(-1, 1), glm::vec2(-1, 0), glm::vec2(0, 0),  glm::vec2(1, 0)},   //
+                {glm::vec2(-1, -1), glm::vec2(0, 1),  glm::vec2(0, 0),  glm::vec2(0, -1)}},
+
+        {{glm::vec2(0, 0),  glm::vec2(-1, 0), glm::vec2(1, 0),  glm::vec2(0, -1)},    //  T
+                {glm::vec2(0, 1),  glm::vec2(0, 0),  glm::vec2(0, -1), glm::vec2(1, 0)},   //
+                {glm::vec2(0, 1),  glm::vec2(-1, 0), glm::vec2(0, 0),  glm::vec2(1, 0)},   //
+                {glm::vec2(-1, 0),  glm::vec2(0, 1),  glm::vec2(0, 0),  glm::vec2(0, -1)}}
+};
 glm::vec4 red = {1, 0, 0, 1};
+glm::vec4 blue = {0, 0, 1, 1};
+glm::vec4 yellow = {0.9, 0.9, 0, 1};
+glm::vec4 cyan = {0, 1, 1, 1};
+glm::vec4 orange = {1, 0.5, 0, 1};
+glm::vec4 green = {0, 1, 0, 1};
+glm::vec4 purple = {1, 0, 1, 1};
+glm::vec4 TetrisTypeColors[7] = {orange, yellow, cyan, red, green, blue, purple};
 
 // 更新俄罗斯方块的位置
 void updateTetrisPosition() {
@@ -60,14 +100,16 @@ void newTetris() {
     TetrisPosition = {5, 18}; // 初始位置中心
     std::random_device rd;  // 使用随机设备作为种子
     std::mt19937 gen(rd()); // 使用 Mersenne Twister 作为随机数引擎
-    std::uniform_int_distribution<int> dis(0, 3); // 生成 [0,3] 范围内的随机整数
-    rotation = dis(gen); // 随机旋转方向
+    std::uniform_int_distribution<int> disRotation(0, 3); // 生成 [0,3] 范围内的随机整数
+    rotation = disRotation(gen); // 随机旋转方向
+    std::uniform_int_distribution<int> disType(0, 6); // 生成 [0,6] 范围内的随机整数
+    Type = disType(gen); // 随机形状
     for (int i = 0; i < 4; i++) { // 生成一种俄罗斯方块
-        TetrisCubes[i] = Tetris_L[rotation][i];
+        TetrisCubes[i] = TetrisTypes[Type][rotation][i];
     }
     glm::vec4 TetrisColors[24];
     for (auto &TetrisColor: TetrisColors)
-        TetrisColor = {1, 0, 0, 1};
+        TetrisColor = TetrisTypeColors[Type];
     glBindBuffer(GL_ARRAY_BUFFER, Tetris_colors_VBO);
     glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(TetrisColors), TetrisColors);
     updateTetrisPosition();
@@ -85,12 +127,12 @@ bool isPositionValid(glm::vec2 cubePosition) {
 void rotateTetris() {
     int nextRotation = (rotation + 1) % 4;
     for (int i = 0; i < 4; i++) {
-        if (!isPositionValid(TetrisPosition + Tetris_L[nextRotation][i]))
+        if (!isPositionValid(TetrisPosition + TetrisTypes[Type][nextRotation][i]))
             return;
     }
     rotation = nextRotation;
     for (int i = 0; i < 4; i++) { // 生成一种俄罗斯方块
-        TetrisCubes[i] = Tetris_L[rotation][i];
+        TetrisCubes[i] = TetrisTypes[Type][rotation][i];
     }
     updateTetrisPosition();
 }
@@ -127,7 +169,7 @@ void settleTetris() {
         int x = position.x;
         int y = position.y;
         cube_filled[x][y] = true;
-        changeCubeColor(position, red);
+        changeCubeColor(position, TetrisTypeColors[Type]);
     }
 }
 
@@ -238,7 +280,7 @@ void initGame() {
         glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 0, nullptr);
         glEnableVertexAttribArray(0);
         for (auto &cube_all_color: cube_all_colors) {
-            cube_all_color = {0, 1, 1, 1}; // 全部方块点的颜色
+            cube_all_color = {0, 0, 0, 1}; // 全部方块点的颜色
         }
         glGenBuffers(1, &cube_all_colors_VBO);
         glBindBuffer(GL_ARRAY_BUFFER, cube_all_colors_VBO);
