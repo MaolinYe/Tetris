@@ -209,3 +209,63 @@ void key_callback(GLFWwindow *window, int key, int scancode, int action, int mod
 }
 ```
 ![img.gif](images/移动旋转俄罗斯方块.gif)
+## 放置俄罗斯方块
+放置俄罗斯方块就是改变某个位置方块的颜色，对于一个方块的位置，更新其对应六个顶点的颜色
+```c++
+// 改变单个方块的颜色
+void changeCubeColor(glm::vec2 cubePosition, glm::vec4 color) {
+    int offset = 6 * (cubePosition.x + cubePosition.y * cube_num_w);
+    glm::vec4 colors[6] = {color, color, color, color, color, color};
+    glBindBuffer(GL_ARRAY_BUFFER, cube_all_colors_VBO);
+    glBufferSubData(GL_ARRAY_BUFFER, offset * sizeof(glm::vec4), sizeof(colors), colors);
+    for (int i = 0; i < 4; i++) {
+        cube_all_colors[offset + i] = color;
+    }
+}
+```
+一个俄罗斯方块由四个方块组成，更新这四个方块位置的颜色，并标记位置为已经填充
+```c++
+// 放置俄罗斯方块
+void settleTetris() {
+    for (int i = 0; i < 4; i++) {
+        glm::vec2 position = TetrisPosition + TetrisCubes[i];
+        int x = position.x;
+        int y = position.y;
+        cube_filled[x][y] = true;
+        changeCubeColor(position, red);
+    }
+}
+```
+更新下落事件，当无法下落说明这里就是该方块的归宿
+```c++
+// 处理键盘输入事件
+void key_callback(GLFWwindow *window, int key, int scancode, int action, int mode) {
+    if (action == GLFW_PRESS || action == GLFW_REPEAT) {
+        if (key == GLFW_KEY_ESCAPE)
+            glfwSetWindowShouldClose(window, true);
+        else if (key == GLFW_KEY_W) {
+            rotateTetris();
+        } else if (key == GLFW_KEY_S) { // 如果不能下落说明到位置放置了
+            if (!moveTetris({0, -1})) {
+                settleTetris();
+                newTetris();
+            }
+        } else if (key == GLFW_KEY_A) {
+            moveTetris({-1, 0});
+        } else if (key == GLFW_KEY_D) {
+            moveTetris({1, 0});
+        }
+    }
+}
+```
+增加方块位置合法性检测，让方块叠起来，如果该位置已经被方块填充，位置无效
+```c++
+// 检查方块位置合法性
+bool isPositionValid(glm::vec2 cubePosition) {
+    if (cubePosition.x >= 0 && cubePosition.x < cube_num_w && cubePosition.y >= 0 && cubePosition.y < cube_num_h &&
+        !cube_filled[(int) cubePosition.x][(int) cubePosition.y])
+        return true;
+    return false;
+}
+```
+![img.gif](images/放置层叠俄罗斯方块.gif)

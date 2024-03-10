@@ -36,6 +36,7 @@ glm::vec2 Tetris_L[4][4] = // L方块四种旋转相对于中心的位置偏移
          {glm::vec2(0, 1),  glm::vec2(0, 0),  glm::vec2(0, -1), glm::vec2(1, -1)},
          {glm::vec2(1, 1),  glm::vec2(-1, 0), glm::vec2(0, 0),  glm::vec2(1, 0)},
          {glm::vec2(-1, 1), glm::vec2(0, 1),  glm::vec2(0, 0),  glm::vec2(0, -1)}};
+glm::vec4 red = {1, 0, 0, 1};
 
 // 更新俄罗斯方块的位置
 void updateTetrisPosition() {
@@ -74,7 +75,8 @@ void newTetris() {
 
 // 检查方块位置合法性
 bool isPositionValid(glm::vec2 cubePosition) {
-    if (cubePosition.x >= 0 && cubePosition.x < cube_num_w && cubePosition.y >= 0 && cubePosition.y < cube_num_h)
+    if (cubePosition.x >= 0 && cubePosition.x < cube_num_w && cubePosition.y >= 0 && cubePosition.y < cube_num_h &&
+        !cube_filled[(int) cubePosition.x][(int) cubePosition.y])
         return true;
     return false;
 }
@@ -94,15 +96,39 @@ void rotateTetris() {
 }
 
 // 移动俄罗斯方块
-void moveTetris(glm::vec2 move) {
+bool moveTetris(glm::vec2 move) {
     glm::vec2 newPosition[4];
     for (int i = 0; i < 4; i++) {
         newPosition[i] = TetrisPosition + move + TetrisCubes[i];
         if (!isPositionValid(newPosition[i]))
-            return;
+            return false;
     }
     TetrisPosition += move;
     updateTetrisPosition();
+    return true;
+}
+
+
+// 改变单个方块的颜色
+void changeCubeColor(glm::vec2 cubePosition, glm::vec4 color) {
+    int offset = 6 * (cubePosition.x + cubePosition.y * cube_num_w);
+    glm::vec4 colors[6] = {color, color, color, color, color, color};
+    glBindBuffer(GL_ARRAY_BUFFER, cube_all_colors_VBO);
+    glBufferSubData(GL_ARRAY_BUFFER, offset * sizeof(glm::vec4), sizeof(colors), colors);
+    for (int i = 0; i < 4; i++) {
+        cube_all_colors[offset + i] = color;
+    }
+}
+
+// 放置俄罗斯方块
+void settleTetris() {
+    for (int i = 0; i < 4; i++) {
+        glm::vec2 position = TetrisPosition + TetrisCubes[i];
+        int x = position.x;
+        int y = position.y;
+        cube_filled[x][y] = true;
+        changeCubeColor(position, red);
+    }
 }
 
 // 处理键盘输入事件
@@ -112,12 +138,15 @@ void key_callback(GLFWwindow *window, int key, int scancode, int action, int mod
             glfwSetWindowShouldClose(window, true);
         else if (key == GLFW_KEY_W) {
             rotateTetris();
-        } else if (key == GLFW_KEY_S) {
-            moveTetris({0,-1});
+        } else if (key == GLFW_KEY_S) { // 如果不能下落说明到位置放置了
+            if (!moveTetris({0, -1})) {
+                settleTetris();
+                newTetris();
+            }
         } else if (key == GLFW_KEY_A) {
-            moveTetris({-1,0});
+            moveTetris({-1, 0});
         } else if (key == GLFW_KEY_D) {
-            moveTetris({1,0});
+            moveTetris({1, 0});
         }
     }
 }
