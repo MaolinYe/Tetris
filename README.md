@@ -364,3 +364,58 @@ void newTetris() {
         glfwPollEvents(); // 检查是否触发了任何事件（如键盘输入或鼠标移动事件）
     }
 ```
+// 消除方块
+之前用的x和y坐标，x是列序，y是行序，就是20×10的存储成10×20的了，方块的消除是按行的，也就是固定y，检测每一行能否可以消除，抹去可以消除的方块存在痕迹，下移方块
+```c++
+// 消除方块
+void eliminate(int row) {
+    // 如果这一行有缺口直接返回
+    for (auto &i: cube_filled) {
+        if (!i[row])
+            return;
+    }
+    // 抹去这一行方块的存在痕迹
+    for (auto &i: cube_filled) {
+        i[row] = false;
+    }
+    // 将上面的方块搬下来，每行拷贝上一行的颜色
+    for (int i = row; i < cube_num_h - 1; i++) {
+        for (int j = 0; j < cube_num_w; j++) {
+            cube_filled[j][i] = cube_filled[j][i + 1];
+            int number = cube_num_w * i + j;
+            glm::vec4 color = cube_all_colors[6 * (number + cube_num_w)];
+            for (int k = 0; k < 6; k++) {
+                cube_all_colors[6 * number + k] = color;
+            }
+            changeCubeColor({j, i}, color);
+        }
+    }
+    // 最上面一行无法拷贝，直接改黑
+    for (int i = 0; i < cube_num_w; i++) {
+        cube_filled[i][cube_num_h - 1] = false;
+        for (int j = 0; j < 6; j++) {
+            cube_all_colors[6 * (cube_num_w * 19 + i) + j] = black;
+        }
+        changeCubeColor({i, cube_num_h - 1}, black);
+    }
+}
+```
+放置方块之后检查每一行是否可以消除
+```c++
+// 放置俄罗斯方块
+void settleTetris() {
+    for (int i = 0; i < 4; i++) {
+        glm::vec2 position = TetrisPosition + TetrisCubes[i];
+        int x = position.x;
+        int y = position.y;
+        cube_filled[x][y] = true;
+        changeCubeColor(position, TetrisTypeColors[Type]);
+    }
+    // 检测是否可消除
+    for (int i = 0; i < cube_num_h; i++) {
+        eliminate(i);
+    }
+}
+```
+![img.gif](images/俄罗斯方块.gif)
+![img.gif](images/Tetris.gif)

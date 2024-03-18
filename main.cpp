@@ -76,6 +76,7 @@ glm::vec4 cyan = {0, 1, 1, 1};
 glm::vec4 orange = {1, 0.5, 0, 1};
 glm::vec4 green = {0, 1, 0, 1};
 glm::vec4 purple = {1, 0, 1, 1};
+glm::vec4 black = {0, 0, 0, 1};
 glm::vec4 TetrisTypeColors[7] = {orange, yellow, cyan, red, green, blue, purple};
 
 // 更新俄罗斯方块的位置
@@ -150,7 +151,6 @@ bool moveTetris(glm::vec2 move) {
     return true;
 }
 
-
 // 改变单个方块的颜色
 void changeCubeColor(glm::vec2 cubePosition, glm::vec4 color) {
     int offset = 6 * (cubePosition.x + cubePosition.y * cube_num_w);
@@ -162,6 +162,39 @@ void changeCubeColor(glm::vec2 cubePosition, glm::vec4 color) {
     }
 }
 
+// 消除方块
+void eliminate(int row) {
+    // 如果这一行有缺口直接返回
+    for (auto &i: cube_filled) {
+        if (!i[row])
+            return;
+    }
+    // 抹去这一行方块的存在痕迹
+    for (auto &i: cube_filled) {
+        i[row] = false;
+    }
+    // 将上面的方块搬下来，每行拷贝上一行的颜色
+    for (int i = row; i < cube_num_h - 1; i++) {
+        for (int j = 0; j < cube_num_w; j++) {
+            cube_filled[j][i] = cube_filled[j][i + 1];
+            int number = cube_num_w * i + j;
+            glm::vec4 color = cube_all_colors[6 * (number + cube_num_w)];
+            for (int k = 0; k < 6; k++) {
+                cube_all_colors[6 * number + k] = color;
+            }
+            changeCubeColor({j, i}, color);
+        }
+    }
+    // 最上面一行无法拷贝，直接改黑
+    for (int i = 0; i < cube_num_w; i++) {
+        cube_filled[i][cube_num_h - 1] = false;
+        for (int j = 0; j < 6; j++) {
+            cube_all_colors[6 * (cube_num_w * 19 + i) + j] = black;
+        }
+        changeCubeColor({i, cube_num_h - 1}, black);
+    }
+}
+
 // 放置俄罗斯方块
 void settleTetris() {
     for (int i = 0; i < 4; i++) {
@@ -170,6 +203,10 @@ void settleTetris() {
         int y = position.y;
         cube_filled[x][y] = true;
         changeCubeColor(position, TetrisTypeColors[Type]);
+    }
+    // 检测是否可消除
+    for (int i = 0; i < cube_num_h; i++) {
+        eliminate(i);
     }
 }
 
