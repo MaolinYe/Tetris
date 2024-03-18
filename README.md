@@ -346,3 +346,21 @@ void newTetris() {
 }
 ```
 ![img.gif](images/七种俄罗斯方块.gif)
+## 一定速度下落方块
+我们希望能够以一定速度让俄罗斯方块自然下落，并且这个速度可以改变，可以记录帧之间的间隔时间，当这个帧间隔时间大于设置的时间就下落方块
+```c++
+    double dropTime=1; // 方块下落速度
+    double lastTime=glfwGetTime(); // 上一帧的时间
+    while (!glfwWindowShouldClose(mainWindow)) {
+        if(glfwGetTime()-lastTime>dropTime){ // 以一定速度下落俄罗斯方块
+            if (!moveTetris({0, -1})) { // 下落俄罗斯方块
+                settleTetris();
+                newTetris();
+            }
+            lastTime=glfwGetTime();
+        }
+        rendering();
+        glfwSwapBuffers(mainWindow); // 交换在此渲染迭代期间用于渲染的颜色缓冲区
+        glfwPollEvents(); // 检查是否触发了任何事件（如键盘输入或鼠标移动事件）
+    }
+```

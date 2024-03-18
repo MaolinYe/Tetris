@@ -305,6 +305,16 @@ void initGame() {
     }
 }
 
+// 帧渲染
+void rendering() {
+    glBindVertexArray(cube_all_VAO); // 画全部方块
+    glDrawArrays(GL_TRIANGLES, 0, cube_points_num);
+    glBindVertexArray(Tetris_VAO); // 画俄罗斯方块
+    glDrawArrays(GL_TRIANGLES, 0, 24);
+    glBindVertexArray(line_points_VAO); // 画网格线
+    glDrawArrays(GL_LINES, 0, line_points_num);
+}
+
 int main() {
     init();
     initGame();
@@ -314,13 +324,17 @@ int main() {
     shader.use();
     shader.setInt("xsize", screenWidth);
     shader.setInt("ysize", screenHeight);
+    double dropTime = 1; // 方块下落速度
+    double lastTime = glfwGetTime(); // 上一帧的时间
     while (!glfwWindowShouldClose(mainWindow)) {
-        glBindVertexArray(cube_all_VAO); // 画全部方块
-        glDrawArrays(GL_TRIANGLES, 0, cube_points_num);
-        glBindVertexArray(Tetris_VAO); // 画俄罗斯方块
-        glDrawArrays(GL_TRIANGLES, 0, 24);
-        glBindVertexArray(line_points_VAO); // 画网格线
-        glDrawArrays(GL_LINES, 0, line_points_num);
+        if (glfwGetTime() - lastTime > dropTime) { // 以一定速度下落俄罗斯方块
+            if (!moveTetris({0, -1})) { // 下落俄罗斯方块
+                settleTetris();
+                newTetris();
+            }
+            lastTime = glfwGetTime();
+        }
+        rendering();
         glfwSwapBuffers(mainWindow); // 交换在此渲染迭代期间用于渲染的颜色缓冲区
         glfwPollEvents(); // 检查是否触发了任何事件（如键盘输入或鼠标移动事件）
     }
