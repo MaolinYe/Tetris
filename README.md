@@ -400,7 +400,7 @@ void eliminate(int row) {
     }
 }
 ```
-放置方块之后检查每一行是否可以消除
+放置方块之后检查每一行是否可以消除，注意必须从上到下检测每一行，如果从下到上检测会导致因消除而下落的行被跳过检测
 ```c++
 // 放置俄罗斯方块
 void settleTetris() {
@@ -411,8 +411,8 @@ void settleTetris() {
         cube_filled[x][y] = true;
         changeCubeColor(position, TetrisTypeColors[Type]);
     }
-    // 检测是否可消除
-    for (int i = 0; i < cube_num_h; i++) {
+    // 从上到下检测是否可消除
+    for(int i=cube_num_h-1;i>=0;i--){
         eliminate(i);
     }
 }

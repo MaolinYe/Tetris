@@ -3,9 +3,6 @@
 #include <iostream>
 #include "shader.h"
 #include "glm/detail/type_mat4x4.hpp"
-#include "glm/detail/func_trigonometric.hpp"
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtc/type_ptr.hpp>
 #include <random>
 #include <unistd.h>
 
@@ -204,8 +201,8 @@ void settleTetris() {
         cube_filled[x][y] = true;
         changeCubeColor(position, TetrisTypeColors[Type]);
     }
-    // 检测是否可消除
-    for (int i = 0; i < cube_num_h; i++) {
+    // 从上到下检测是否可消除
+    for(int i=cube_num_h-1;i>=0;i--){
         eliminate(i);
     }
 }
@@ -356,8 +353,8 @@ int main() {
     init();
     initGame();
     newTetris();
-    Shader shader(R"(C:\Users\Yezi\Desktop\Tetris\shaders\shader.vs)",
-                  R"(C:\Users\Yezi\Desktop\Tetris\shaders\shader.fs)");
+    Shader shader(R"(C:\Users\Tencent go\Desktop\Tetris\shaders\shader.vs)",
+                  R"(C:\Users\Tencent go\Desktop\Tetris\shaders\shader.fs)");
     shader.use();
     shader.setInt("xsize", screenWidth);
     shader.setInt("ysize", screenHeight);
