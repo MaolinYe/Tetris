@@ -1,6 +1,7 @@
 # Tetris 俄罗斯方块
-OpenGL实现的俄罗斯方块
-![img.png](images/Tetris.png)
+C++和OpenGL实现的俄罗斯方块，实现了方块的生成、旋转、移动和消除等关键功能，最难的地方在于框架本身的设计，考虑覆盖，分别渲染三部分：网格线、全部方块和四个方块，方块的旋转和形状由数组事先写好，方块的放置通过更新全部方块的颜色实现，消除方块则是移动全部方块的颜色 
+<img src="images/俄罗斯方块.gif" alt="俄罗斯方块" style="width: 375px; height: 725px;">
+<img src="images/Tetris.gif" alt="Tetris" style="width: 375px; height: 725px;">
 ## 棋盘网格
 网格线点的位置
 ```c++
@@ -273,6 +274,7 @@ bool isPositionValid(glm::vec2 cubePosition) {
 I、T、O、J、L、Z、S
 ![img.png](images/Tetris7Types.png)
 使用相对于中心的位移来表示每种俄罗斯方块的形状，并表示出四种旋转方式的相对位移
+![img.png](images/Tetris.png)
 ```c++
 // 七种俄罗斯方块，四种旋转方式，相对于中心的位置偏移
 glm::vec2 TetrisTypes[7][4][4] = {
@@ -417,5 +419,5 @@ void settleTetris() {
     }
 }
 ```
-![img.gif](images/俄罗斯方块.gif)
-![img.gif](images/Tetris.gif)
+<img src="images/俄罗斯方块.gif" alt="俄罗斯方块" style="width: 375px; height: 725px;">
+<img src="images/Tetris.gif" alt="Tetris" style="width: 375px; height: 725px;">
