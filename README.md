@@ -494,6 +494,29 @@ void key_callback(GLFWwindow *window, int key, int scancode, int action, int mod
         else if (key == GLFW_KEY_R) {
             gameRestart();
         }
-    }
+}
+```
+## 快速下落
+新增键盘映射，按下空格就不断下移直到不能下移
+```c++
+// 处理键盘输入事件
+void key_callback(GLFWwindow *window, int key, int scancode, int action, int mode) {
+        else if(key==GLFW_KEY_SPACE) {
+            while(moveTetris({0,-1}));
+        }
+}
+```
+## 暂停游戏
+新增键盘映射，按下P键暂停游戏，可以选择继续游戏，也可以选择退出游戏
+```c++
+// 处理键盘输入事件
+void key_callback(GLFWwindow *window, int key, int scancode, int action, int mode) {
+         else if (key == GLFW_KEY_P) {
+            // 暂停游戏
+            int answer = MessageBox(GetForegroundWindow(), "Do you want to continue the game ?",
+                "Game Pause",MB_YESNO);
+            if (answer == IDNO)
+                exit(EXIT_SUCCESS);
+        }
 }
 ```

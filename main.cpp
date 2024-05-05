@@ -98,7 +98,8 @@ void gameOverShow() {
 
 // 重新开始游戏
 void gameRestart() {
-    int answer = MessageBox(GetForegroundWindow(), "Do you want to restart the game ?", "o.O?",MB_YESNO);
+    int answer = MessageBox(GetForegroundWindow(), "Do you want to restart the game ?",
+        "o.O?",MB_YESNO);
     if (answer == IDYES)
         initGame();
 }
@@ -258,6 +259,14 @@ void key_callback(GLFWwindow *window, int key, int scancode, int action, int mod
             GameOver = true;
         } else if (key == GLFW_KEY_R) {
             gameRestart();
+        } else if (key == GLFW_KEY_SPACE) {
+            while (moveTetris({0, -1}));
+        } else if (key == GLFW_KEY_P) {
+            // 暂停游戏
+            int answer = MessageBox(GetForegroundWindow(), "Do you want to continue the game ?",
+                "Game Pause",MB_YESNO);
+            if (answer == IDNO)
+                exit(EXIT_SUCCESS);
         }
     }
 }
