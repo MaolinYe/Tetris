@@ -366,7 +366,7 @@ void newTetris() {
         glfwPollEvents(); // 检查是否触发了任何事件（如键盘输入或鼠标移动事件）
     }
 ```
-// 消除方块
+## 消除方块
 之前用的x和y坐标，x是列序，y是行序，就是20×10的存储成10×20的了，方块的消除是按行的，也就是固定y，检测每一行能否可以消除，抹去可以消除的方块存在痕迹，下移方块
 ```c++
 // 消除方块
@@ -420,4 +420,80 @@ void settleTetris() {
 }
 ```
 <img src="images/俄罗斯方块.gif" alt="俄罗斯方块" style="width: 375px; height: 725px;">
-<img src="images/Tetris.gif" alt="Tetris" style="width: 375px; height: 725px;">
+<img src="images/Tetris.gif" alt="Tetris" style="width: 375px; height: 725px;">  
+
+## 游戏结束
+如果游戏结束，弹窗提示
+```c++
+bool GameOver = false;
+// 游戏结束
+void gameOverShow() {
+    std::string message = "GameOver!";
+    MessageBox(GetForegroundWindow(), message.c_str(), "o.O?",MB_OK);
+    exit(EXIT_SUCCESS);
+}
+```
+在生成新的方块的时候检查是否有方块的位置无效，无效则说明游戏应该结束了
+```c++
+void updateTetrisPosition() {
+    glBindBuffer(GL_ARRAY_BUFFER, Tetris_VBO);
+    for (int i = 0; i < 4; i++) {
+        // 计算四个方块的位置
+        // 由相对位置计算出方块的位置
+        float x = TetrisPosition.x + TetrisCubes[i].x;
+        float y = TetrisPosition.y + TetrisCubes[i].y;
+        if (!isPositionValid({x, y})) // 检查是否窗口被占满无法出现新的方块
+            GameOver = true;
+        // 计算方块四个点位置
+        glm::vec4 p1 = {cube_size * (x + 1), cube_size * (y + 1), 0, 1};
+        glm::vec4 p2 = p1 + glm::vec4{0, cube_size, 0, 0};
+        glm::vec4 p3 = p1 + glm::vec4{cube_size, 0, 0, 0};
+        glm::vec4 p4 = p1 + glm::vec4{cube_size, cube_size, 0, 0};
+        glm::vec4 tetris_points[6] = {p1, p2, p3, p2, p3, p4};
+        glBufferSubData(GL_ARRAY_BUFFER, i * 6 * sizeof(glm::vec4), 6 * sizeof(glm::vec4), tetris_points);
+    }
+}
+```
+如果按下Q键也结束
+```c++
+// 处理键盘输入事件
+void key_callback(GLFWwindow *window, int key, int scancode, int action, int mode) {
+        else if (key == GLFW_KEY_Q) {
+            GameOver = true;
+        } 
+}
+```
+帧渲染中检查
+```c++
+// 帧渲染
+void rendering() {
+    if (GameOver)
+        gameOverShow();
+    glBindVertexArray(cube_all_VAO); // 画全部方块
+    glDrawArrays(GL_TRIANGLES, 0, cube_points_num);
+    glBindVertexArray(Tetris_VAO); // 画俄罗斯方块
+    glDrawArrays(GL_TRIANGLES, 0, 24);
+    glBindVertexArray(line_points_VAO); // 画网格线
+    glDrawArrays(GL_LINES, 0, line_points_num);
+}
+```
+## 游戏重新开始
+弹窗二次确认，重新初始化
+```c++
+// 重新开始游戏
+void gameRestart() {
+    int answer = MessageBox(GetForegroundWindow(), "Do you want to restart the game ?", "o.O?",MB_YESNO);
+    if (answer == IDYES)
+        initGame();
+}
+```
+新增键盘映射
+```c++
+// 处理键盘输入事件
+void key_callback(GLFWwindow *window, int key, int scancode, int action, int mode) {
+        else if (key == GLFW_KEY_R) {
+            gameRestart();
+        }
+    }
+}
+```

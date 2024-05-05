@@ -5,11 +5,16 @@
 #include "glm/detail/type_mat4x4.hpp"
 #include <random>
 #include <unistd.h>
+#include <windows.h>
+
+bool isPositionValid(glm::vec2 cubePosition);
+
+void initGame();
 
 GLFWwindow *mainWindow;
-const int screenWidth = 600; // cube x 12
-const int screenHeight = 1100; // cube x 22
-const int cube_size = 50; // 方块大小
+const int screenWidth = 720; // cube x 12
+const int screenHeight = 1320; // cube x 22
+const int cube_size = 60; // 方块大小
 const int cube_num_w = 10; // 宽度方块数量
 const int cube_num_h = 20; // 高度方块数量
 const int line_points_num = 2 * (cube_num_h + cube_num_w + 2); // 网格线点数量
@@ -31,40 +36,48 @@ int rotation = 0;
 int Type; // 七种俄罗斯方块中的一种
 // 七种俄罗斯方块，四种旋转方式，相对于中心的位置偏移
 glm::vec2 TetrisTypes[7][4][4] = {
-        {{glm::vec2(0, 0),  glm::vec2(-1, 0), glm::vec2(1, 0),  glm::vec2(-1, -1)},    //   L
-                {glm::vec2(0, 1),  glm::vec2(0, 0),  glm::vec2(0, -1), glm::vec2(1, -1)},   //
-                {glm::vec2(1, 1),  glm::vec2(-1, 0), glm::vec2(0, 0),  glm::vec2(1, 0)},   //
-                {glm::vec2(-1, 1),  glm::vec2(0, 1),  glm::vec2(0, 0),  glm::vec2(0, -1)}},
-
-        {{glm::vec2(0, 0),  glm::vec2(-1, 0), glm::vec2(0, -1), glm::vec2(-1, -1)},   // O
-                {glm::vec2(0, 0),  glm::vec2(-1, 0), glm::vec2(0, -1), glm::vec2(-1, -1)},
-                {glm::vec2(0, 0),  glm::vec2(-1, 0), glm::vec2(0, -1), glm::vec2(-1, -1)},
-                {glm::vec2(0, 0),   glm::vec2(-1, 0), glm::vec2(0, -1), glm::vec2(-1, -1)}},
-
-        {{glm::vec2(-2, 0), glm::vec2(-1, 0), glm::vec2(0, 0),  glm::vec2(1, 0)},    // I
-                {glm::vec2(0, 1),  glm::vec2(0, 0),  glm::vec2(0, -1), glm::vec2(0, -2)},   //
-                {glm::vec2(-2, 0), glm::vec2(-1, 0), glm::vec2(0, 0),  glm::vec2(1, 0)},   //
-                {glm::vec2(0, 1),   glm::vec2(0, 0),  glm::vec2(0, -1), glm::vec2(0, -2)}},
-
-        {{glm::vec2(0, 0),  glm::vec2(1, 0),  glm::vec2(0, -1), glm::vec2(-1, -1)},    // S
-                {glm::vec2(0, 1),  glm::vec2(0, 0),  glm::vec2(1, 0),  glm::vec2(1, -1)},   //
-                {glm::vec2(0, 0),  glm::vec2(1, 0),  glm::vec2(0, -1), glm::vec2(-1, -1)},   //
-                {glm::vec2(0, 1),   glm::vec2(0, 0),  glm::vec2(1, 0),  glm::vec2(1, -1)}},
-
-        {{glm::vec2(0, 0),  glm::vec2(-1, 0), glm::vec2(0, -1), glm::vec2(1, -1)},    // Z
-                {glm::vec2(0, -1), glm::vec2(0, 0),  glm::vec2(1, 0),  glm::vec2(1, 1)},   //
-                {glm::vec2(0, 0),  glm::vec2(-1, 0), glm::vec2(0, -1), glm::vec2(1, -1)},   //
-                {glm::vec2(0, -1),  glm::vec2(0, 0),  glm::vec2(1, 0),  glm::vec2(1, 1)}},
-
-        {{glm::vec2(0, 0),  glm::vec2(-1, 0), glm::vec2(1, 0),  glm::vec2(1, -1)},    // J
-                {glm::vec2(0, 1),  glm::vec2(0, 0),  glm::vec2(0, -1), glm::vec2(1, 1)},   //
-                {glm::vec2(-1, 1), glm::vec2(-1, 0), glm::vec2(0, 0),  glm::vec2(1, 0)},   //
-                {glm::vec2(-1, -1), glm::vec2(0, 1),  glm::vec2(0, 0),  glm::vec2(0, -1)}},
-
-        {{glm::vec2(0, 0),  glm::vec2(-1, 0), glm::vec2(1, 0),  glm::vec2(0, -1)},    //  T
-                {glm::vec2(0, 1),  glm::vec2(0, 0),  glm::vec2(0, -1), glm::vec2(1, 0)},   //
-                {glm::vec2(0, 1),  glm::vec2(-1, 0), glm::vec2(0, 0),  glm::vec2(1, 0)},   //
-                {glm::vec2(-1, 0),  glm::vec2(0, 1),  glm::vec2(0, 0),  glm::vec2(0, -1)}}
+    {
+        {glm::vec2(0, 0), glm::vec2(-1, 0), glm::vec2(1, 0), glm::vec2(-1, -1)}, // L
+        {glm::vec2(0, 1), glm::vec2(0, 0), glm::vec2(0, -1), glm::vec2(1, -1)},
+        {glm::vec2(1, 1), glm::vec2(-1, 0), glm::vec2(0, 0), glm::vec2(1, 0)},
+        {glm::vec2(-1, 1), glm::vec2(0, 1), glm::vec2(0, 0), glm::vec2(0, -1)}
+    },
+    {
+        {glm::vec2(0, 0), glm::vec2(-1, 0), glm::vec2(0, -1), glm::vec2(-1, -1)}, // O
+        {glm::vec2(0, 0), glm::vec2(-1, 0), glm::vec2(0, -1), glm::vec2(-1, -1)},
+        {glm::vec2(0, 0), glm::vec2(-1, 0), glm::vec2(0, -1), glm::vec2(-1, -1)},
+        {glm::vec2(0, 0), glm::vec2(-1, 0), glm::vec2(0, -1), glm::vec2(-1, -1)}
+    },
+    {
+        {glm::vec2(-2, 0), glm::vec2(-1, 0), glm::vec2(0, 0), glm::vec2(1, 0)}, // I
+        {glm::vec2(0, 1), glm::vec2(0, 0), glm::vec2(0, -1), glm::vec2(0, -2)},
+        {glm::vec2(-2, 0), glm::vec2(-1, 0), glm::vec2(0, 0), glm::vec2(1, 0)},
+        {glm::vec2(0, 1), glm::vec2(0, 0), glm::vec2(0, -1), glm::vec2(0, -2)}
+    },
+    {
+        {glm::vec2(0, 0), glm::vec2(1, 0), glm::vec2(0, -1), glm::vec2(-1, -1)}, // S
+        {glm::vec2(0, 1), glm::vec2(0, 0), glm::vec2(1, 0), glm::vec2(1, -1)},
+        {glm::vec2(0, 0), glm::vec2(1, 0), glm::vec2(0, -1), glm::vec2(-1, -1)},
+        {glm::vec2(0, 1), glm::vec2(0, 0), glm::vec2(1, 0), glm::vec2(1, -1)}
+    },
+    {
+        {glm::vec2(0, 0), glm::vec2(-1, 0), glm::vec2(0, -1), glm::vec2(1, -1)}, // Z
+        {glm::vec2(0, -1), glm::vec2(0, 0), glm::vec2(1, 0), glm::vec2(1, 1)},
+        {glm::vec2(0, 0), glm::vec2(-1, 0), glm::vec2(0, -1), glm::vec2(1, -1)},
+        {glm::vec2(0, -1), glm::vec2(0, 0), glm::vec2(1, 0), glm::vec2(1, 1)}
+    },
+    {
+        {glm::vec2(0, 0), glm::vec2(-1, 0), glm::vec2(1, 0), glm::vec2(1, -1)}, // J
+        {glm::vec2(0, 1), glm::vec2(0, 0), glm::vec2(0, -1), glm::vec2(1, 1)},
+        {glm::vec2(-1, 1), glm::vec2(-1, 0), glm::vec2(0, 0), glm::vec2(1, 0)},
+        {glm::vec2(-1, -1), glm::vec2(0, 1), glm::vec2(0, 0), glm::vec2(0, -1)}
+    },
+    {
+        {glm::vec2(0, 0), glm::vec2(-1, 0), glm::vec2(1, 0), glm::vec2(0, -1)}, //  T
+        {glm::vec2(0, 1), glm::vec2(0, 0), glm::vec2(0, -1), glm::vec2(1, 0)},
+        {glm::vec2(0, 1), glm::vec2(-1, 0), glm::vec2(0, 0), glm::vec2(1, 0)},
+        {glm::vec2(-1, 0), glm::vec2(0, 1), glm::vec2(0, 0), glm::vec2(0, -1)}
+    }
 };
 glm::vec4 red = {1, 0, 0, 1};
 glm::vec4 blue = {0, 0, 1, 1};
@@ -75,14 +88,31 @@ glm::vec4 green = {0, 1, 0, 1};
 glm::vec4 purple = {1, 0, 1, 1};
 glm::vec4 black = {0, 0, 0, 1};
 glm::vec4 TetrisTypeColors[7] = {orange, yellow, cyan, red, green, blue, purple};
+bool GameOver = false;
+// 游戏结束
+void gameOverShow() {
+    std::string message = "GameOver!";
+    MessageBox(GetForegroundWindow(), message.c_str(), "o.O?",MB_OK);
+    exit(EXIT_SUCCESS);
+}
+
+// 重新开始游戏
+void gameRestart() {
+    int answer = MessageBox(GetForegroundWindow(), "Do you want to restart the game ?", "o.O?",MB_YESNO);
+    if (answer == IDYES)
+        initGame();
+}
 
 // 更新俄罗斯方块的位置
 void updateTetrisPosition() {
     glBindBuffer(GL_ARRAY_BUFFER, Tetris_VBO);
-    for (int i = 0; i < 4; i++) { // 计算四个方块的位置
+    for (int i = 0; i < 4; i++) {
+        // 计算四个方块的位置
         // 由相对位置计算出方块的位置
         float x = TetrisPosition.x + TetrisCubes[i].x;
         float y = TetrisPosition.y + TetrisCubes[i].y;
+        if (!isPositionValid({x, y})) // 检查是否窗口被占满无法出现新的方块
+            GameOver = true;
         // 计算方块四个点位置
         glm::vec4 p1 = {cube_size * (x + 1), cube_size * (y + 1), 0, 1};
         glm::vec4 p2 = p1 + glm::vec4{0, cube_size, 0, 0};
@@ -96,13 +126,13 @@ void updateTetrisPosition() {
 // 生成新的俄罗斯方块
 void newTetris() {
     TetrisPosition = {5, 18}; // 初始位置中心
-    std::random_device rd;  // 使用随机设备作为种子
+    std::random_device rd; // 使用随机设备作为种子
     std::mt19937 gen(rd()); // 使用 Mersenne Twister 作为随机数引擎
     std::uniform_int_distribution<int> disRotation(0, 3); // 生成 [0,3] 范围内的随机整数
     rotation = disRotation(gen); // 随机旋转方向
     std::uniform_int_distribution<int> disType(0, 6); // 生成 [0,6] 范围内的随机整数
     Type = disType(gen); // 随机形状
-    for (int i = 0; i < 4; i++) { // 生成一种俄罗斯方块
+    for (int i = 0; i < 4; i++) {
         TetrisCubes[i] = TetrisTypes[Type][rotation][i];
     }
     glm::vec4 TetrisColors[24];
@@ -115,8 +145,8 @@ void newTetris() {
 
 // 检查方块位置合法性
 bool isPositionValid(glm::vec2 cubePosition) {
-    if (cubePosition.x >= 0 && cubePosition.x < cube_num_w && cubePosition.y >= 0 && cubePosition.y < cube_num_h &&
-        !cube_filled[(int) cubePosition.x][(int) cubePosition.y])
+    if (cubePosition.x >= 0 && cubePosition.x < cube_num_w && cubePosition.y >= 0 &&
+        cubePosition.y < cube_num_h && !cube_filled[(int) cubePosition.x][(int) cubePosition.y])
         return true;
     return false;
 }
@@ -129,7 +159,7 @@ void rotateTetris() {
             return;
     }
     rotation = nextRotation;
-    for (int i = 0; i < 4; i++) { // 生成一种俄罗斯方块
+    for (int i = 0; i < 4; i++) {
         TetrisCubes[i] = TetrisTypes[Type][rotation][i];
     }
     updateTetrisPosition();
@@ -202,7 +232,7 @@ void settleTetris() {
         changeCubeColor(position, TetrisTypeColors[Type]);
     }
     // 从上到下检测是否可消除
-    for(int i=cube_num_h-1;i>=0;i--){
+    for (int i = cube_num_h - 1; i >= 0; i--) {
         eliminate(i);
     }
 }
@@ -214,7 +244,8 @@ void key_callback(GLFWwindow *window, int key, int scancode, int action, int mod
             glfwSetWindowShouldClose(window, true);
         else if (key == GLFW_KEY_W) {
             rotateTetris();
-        } else if (key == GLFW_KEY_S) { // 如果不能下落说明到位置放置了
+        } else if (key == GLFW_KEY_S) {
+            // 如果不能下落说明到位置放置了
             if (!moveTetris({0, -1})) {
                 settleTetris();
                 newTetris();
@@ -223,6 +254,10 @@ void key_callback(GLFWwindow *window, int key, int scancode, int action, int mod
             moveTetris({-1, 0});
         } else if (key == GLFW_KEY_D) {
             moveTetris({1, 0});
+        } else if (key == GLFW_KEY_Q) {
+            GameOver = true;
+        } else if (key == GLFW_KEY_R) {
+            gameRestart();
         }
     }
 }
@@ -235,19 +270,20 @@ void framebuffer_size_callback(GLFWwindow *window, int width, int height) {
 void init() {
     // 初始化GLFW窗口和GLAD
     {
-        glfwInit();  // 初始化GLFW
+        glfwInit(); // 初始化GLFW
         glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3); // 指定创建的内容必须兼容的客户端 API 版本
         glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3); // 指定创建的内容必须兼容的客户端 API 版本
         glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE); // 指定要为其创建内容的 OpenGL 配置文件
         //glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE); // 指定 OpenGL 上下文是否应向前兼容
-        mainWindow = glfwCreateWindow(screenWidth, screenHeight, "俄罗斯方块", nullptr, nullptr);
+        mainWindow = glfwCreateWindow(screenWidth, screenHeight, "2021155015_叶茂林_期中大作业", nullptr, nullptr);
         if (mainWindow == nullptr) {
             std::cout << "Failed to create GLFW mainWindow" << std::endl;
             glfwTerminate();
             exit(-1);
         }
         glfwMakeContextCurrent(mainWindow); // 告诉 GLFW 将窗口的内容作为当前线程上的主要内容
-        if (!gladLoadGLLoader((GLADloadproc) glfwGetProcAddress)) { // 初始化 GLAD
+        if (!gladLoadGLLoader((GLADloadproc) glfwGetProcAddress)) {
+            // 初始化 GLAD
             std::cout << "Failed to initialize GLAD" << std::endl;
             exit(-1);
         }
@@ -261,12 +297,14 @@ void initGame() {
     // 画网格线
     {
         glm::vec4 line_points[line_points_num]; // 线点集
-        for (int i = 0; i <= cube_num_w; i++) { // 竖线
+        for (int i = 0; i <= cube_num_w; i++) {
+            // 竖线
             line_points[2 * i] = {cube_size * (i + 1), cube_size, 0, 1}; // 线下端点
             line_points[2 * i + 1] = line_points[2 * i] + glm::vec4{0, cube_num_h * cube_size, 0, 0}; // 线上端点
         }
         int points_h_num = 2 * (cube_num_w + 1); // 竖线点数量
-        for (int i = 0; i <= cube_num_h; i++) { // 横线
+        for (int i = 0; i <= cube_num_h; i++) {
+            // 横线
             line_points[points_h_num + 2 * i] = {cube_size, cube_size * (i + 1), 0, 1}; // 线左端点
             line_points[points_h_num + 2 * i + 1] =
                     line_points[points_h_num + 2 * i] + glm::vec4{cube_num_w * cube_size, 0, 0, 0}; // 线右端点
@@ -337,10 +375,13 @@ void initGame() {
         glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 0, nullptr);
         glEnableVertexAttribArray(1);
     }
+    newTetris();
 }
 
 // 帧渲染
 void rendering() {
+    if (GameOver)
+        gameOverShow();
     glBindVertexArray(cube_all_VAO); // 画全部方块
     glDrawArrays(GL_TRIANGLES, 0, cube_points_num);
     glBindVertexArray(Tetris_VAO); // 画俄罗斯方块
@@ -352,17 +393,18 @@ void rendering() {
 int main() {
     init();
     initGame();
-    newTetris();
-    Shader shader(R"(C:\Users\Tencent go\Desktop\Tetris\shaders\shader.vs)",
-                  R"(C:\Users\Tencent go\Desktop\Tetris\shaders\shader.fs)");
+    Shader shader(R"(C:\Users\Yezi\Desktop\Tetris\shaders\shader.vs)",
+                  R"(C:\Users\Yezi\Desktop\Tetris\shaders\shader.fs)");
     shader.use();
     shader.setInt("xsize", screenWidth);
     shader.setInt("ysize", screenHeight);
     double dropTime = 1; // 方块下落速度
     double lastTime = glfwGetTime(); // 上一帧的时间
     while (!glfwWindowShouldClose(mainWindow)) {
-        if (glfwGetTime() - lastTime > dropTime) { // 以一定速度下落俄罗斯方块
-            if (!moveTetris({0, -1})) { // 下落俄罗斯方块
+        if (glfwGetTime() - lastTime > dropTime) {
+            // 以一定速度下落俄罗斯方块
+            if (!moveTetris({0, -1})) {
+                // 下落俄罗斯方块
                 settleTetris();
                 newTetris();
             }
