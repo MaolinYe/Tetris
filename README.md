@@ -520,3 +520,16 @@ void key_callback(GLFWwindow *window, int key, int scancode, int action, int mod
         }
 }
 ```
+## 游戏计分，难度递增
+```c++
+// 关卡提升
+void levelUp() {
+    int answer = MessageBox(GetForegroundWindow(), "Do you want to continue?",
+                            "LEVEL UP!!!",MB_YESNO);
+    if (answer == IDYES) {
+        ++level;
+        dropTime *= 0.75;
+    } else
+        gameOverShow();
+}
+```

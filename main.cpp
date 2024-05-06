@@ -88,10 +88,13 @@ glm::vec4 green = {0, 1, 0, 1};
 glm::vec4 purple = {1, 0, 1, 1};
 glm::vec4 black = {0, 0, 0, 1};
 glm::vec4 TetrisTypeColors[7] = {orange, yellow, cyan, red, green, blue, purple};
+int score = 0; // 消除积分
 bool GameOver = false;
+double dropTime = 1; // 方块下落速度
+int level = 1; // 速度级别
 // 游戏结束
 void gameOverShow() {
-    std::string message = "GameOver!";
+    std::string message = "GameOver! Score: " + std::to_string(score) + "Level: " + std::to_string(level);
     MessageBox(GetForegroundWindow(), message.c_str(), "o.O?",MB_OK);
     exit(EXIT_SUCCESS);
 }
@@ -99,9 +102,20 @@ void gameOverShow() {
 // 重新开始游戏
 void gameRestart() {
     int answer = MessageBox(GetForegroundWindow(), "Do you want to restart the game ?",
-        "o.O?",MB_YESNO);
+                            "o.O?",MB_YESNO);
     if (answer == IDYES)
         initGame();
+}
+
+// 关卡提升
+void levelUp() {
+    int answer = MessageBox(GetForegroundWindow(), "Do you want to continue?",
+                            "LEVEL UP!!!",MB_YESNO);
+    if (answer == IDYES) {
+        ++level;
+        dropTime *= 0.75;
+    } else
+        gameOverShow();
 }
 
 // 更新俄罗斯方块的位置
@@ -221,6 +235,10 @@ void eliminate(int row) {
         }
         changeCubeColor({i, cube_num_h - 1}, black);
     }
+    score = score + 10;
+    if (score == 100 * level)
+        levelUp();
+    std::cout << "Score: " << score << '\t' << "Level: " << level << std::endl;
 }
 
 // 放置俄罗斯方块
@@ -264,7 +282,7 @@ void key_callback(GLFWwindow *window, int key, int scancode, int action, int mod
         } else if (key == GLFW_KEY_P) {
             // 暂停游戏
             int answer = MessageBox(GetForegroundWindow(), "Do you want to continue the game ?",
-                "Game Pause",MB_YESNO);
+                                    "Game Pause",MB_YESNO);
             if (answer == IDNO)
                 exit(EXIT_SUCCESS);
         }
@@ -399,7 +417,7 @@ void rendering() {
     glDrawArrays(GL_LINES, 0, line_points_num);
 }
 
-int main() {
+int main(int argc, char **argv) {
     init();
     initGame();
     Shader shader(R"(C:\Users\Yezi\Desktop\Tetris\shaders\shader.vs)",
@@ -407,7 +425,6 @@ int main() {
     shader.use();
     shader.setInt("xsize", screenWidth);
     shader.setInt("ysize", screenHeight);
-    double dropTime = 1; // 方块下落速度
     double lastTime = glfwGetTime(); // 上一帧的时间
     while (!glfwWindowShouldClose(mainWindow)) {
         if (glfwGetTime() - lastTime > dropTime) {
